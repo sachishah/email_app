@@ -49,39 +49,27 @@ get '/email' do
 end
 
 post '/email' do
-  from = "#{params[:from_name]} <#{params[:from]}>"
-  to = "#{params[:to_name]} <#{params[:to]}>"
   subject = strip_html(params[:subject])
   body = strip_html(params[:body])
 
-  response = send_mailgun({
-      "from"    => from,
-      "to"      => to,
-      "subject" => subject,
-      "text"    => body
-    })
+  mailgun_opts = {
+    "from"    => "#{params[:from_name]} <#{params[:from]}>",
+    "to"      => "#{params[:to_name]} <#{params[:to]}>",
+    "subject" => subject,
+    "text"    => body
+  }
+  mailgun_opts["cc"] = "#{params[:cc_name]} <#{params[:cc]}>" if params[:cc]
+  mailgun_opts["bcc"] = "#{params[:bcc_name]} <#{params[:bcc]}>" if params[:bcc]
+  response = send_mailgun(mailgun_opts)
 
   if response.code == "200"
-    result = "Email successfully sent to #{from}."
-
-    # save record to database
-    receiver = User.first(:email => params[:to])
-    unless receiver
-      receiver = User.new
-      receiver.name = params[:to_name]
-      receiver.email = params[:to]
-      receiver.inbox = Inbox.new
-      receiver.save!
-    end
-
-    message = Message.new
-    message.inbox = receiver.inbox
-    message.from_email = params[:from]
-    message.received_at = DateTime.now
-    message.subject = subject
-    message.body = body
-
-    result += " Error saving message to db." unless message.save!
+    to_emails = [params[:to], params[:cc], params[:bcc]].compact.join(", ")
+    result = "Email successfully sent to #{to_emails}."
+    opts = params.merge({
+        :subject => subject,
+        :body    => body
+      })
+    result += " Error saving message to db." unless save_record(opts)
   else
     result = "Error sending email via Mailgun."
   end
@@ -99,4 +87,23 @@ end
 def send_mailgun(opts)
   uri = URI.parse($config['mailgun_api_url'])
   Net::HTTP.post_form(uri, opts)
+end
+
+def save_record(opts)
+  receiver = User.first(:email => opts[:to])
+  unless receiver # create a new user if he/she doesn't already exist
+    receiver = User.new
+    receiver.name = opts[:to_name]
+    receiver.email = opts[:to]
+    receiver.inbox = Inbox.new
+    receiver.save!
+  end
+
+  message = Message.new
+  message.inbox = receiver.inbox
+  message.from_email = opts[:from]
+  message.received_at = DateTime.now
+  message.subject = strip_html(opts[:subject])
+  message.body = strip_html(opts[:body])
+  message.save!
 end

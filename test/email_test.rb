@@ -30,7 +30,9 @@ class EmailTest < MiniTest::Unit::TestCase
       from: "from@test.com",
       from_name: "From",
       subject: "subject",
-      body: "<h2>Hi</h2>"
+      body: "<h2>Hi</h2>",
+      cc: "cc@test.com",
+      cc_name: "To Cc"
     }
 
     self.stub :send_mailgun, {} do
@@ -38,6 +40,6 @@ class EmailTest < MiniTest::Unit::TestCase
 
     post '/email', params
     assert last_response.ok?
-    assert last_response.body.include?("Email successfully sent to From <from@test.com>.")
+    assert last_response.body.include?("Email successfully sent to to@test.com, cc@test.com.")
   end
 end
