@@ -1,0 +1,16 @@
+<h2>Email Request</h2>
+<form action="/email" method="post">
+  To:
+    <br/> <input type="email" name="to" value="fake@example.com" required="required" style="width: 400px;"><br/><br/>
+  Receiver's Name:
+    <br/><input type="text" name="to_name" value="Ms. Fake" required="required" style="width: 400px;"><br/><br/>
+  From:
+    <br/><input type="email" name="from" value="noreply@uber.com" required="required" style="width: 400px;"><br/><br/>
+  Sender's Name:
+    <br/><input type="text" name="from_name" value="Uber" required="required" style="width: 400px;"><br/><br/>
+  Subject:
+    <br/><input type="text" name="subject" value="Your Uber Receipt" required="required" style="width: 400px;"><br/><br/>
+  Body: 
+    <br/><textarea name="body" required="required" cols="80" rows="10"><h1>Your Bill</h1><p>$10</p></textarea><br/><br/>
+  <input type="submit">
+</form>
